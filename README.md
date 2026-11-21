@@ -22,7 +22,7 @@ The same CC1101 can also switch and receive cheap 433.92 MHz RF sockets and read
 - PT2262 / EV1527 (fixed-code sockets) and AC (KlikAanKlikUit, Intertechno and compatibles): switch and listen
 - Hideki temperature/humidity sensors (TFA, Technoline, Cresta, Bresser)
 - New sockets and sensors appear in Home Assistant by themselves via MQTT discovery, similar to an RFXtrx
-- Oregon Scientific UV sensors UVN800 and UVR128 (experimental)
+- Oregon Scientific UV sensors UVN800 and UVR128
 
 ## Hardware
 
@@ -209,7 +209,7 @@ The broker remembers the created devices, the ESP stores nothing for them. Delet
 
 Hideki temperature/humidity sensors are decoded. The channel is the one set on the sensor, so a battery change keeps the mapping. Values are only available via MQTT discovery; a sensor that is silent for 10 minutes shows as unavailable.
 
-### Oregon Scientific (experimental)
+### Oregon Scientific UV sensors
 
 The UV sensors UVN800 and UVR128 (Oregon Scientific v2.1/v3.0) appear via MQTT discovery as "Oregon UV … channel N" with UV index and low battery. Every recognised Oregon packet is logged with ID and raw data. Reports and logs are welcome.
 

@@ -164,7 +164,7 @@ class AcDecoder {
       uint8_t first = this->symbols_[2 * i];
       uint8_t second = this->symbols_[2 * i + 1];
       if (first == second)
-        return false;  // z. B. Dimm-Frames, werden nicht unterstuetzt
+        return false;  // kein gueltiges Ein/Aus-Symbol
       value = (value << 1) | first;
     }
     out = Message();

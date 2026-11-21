@@ -22,7 +22,7 @@ Derselbe CC1101 kann außerdem billige Funksteckdosen auf 433,92 MHz schalten un
 - PT2262 / EV1527 (Steckdosen mit festem Code) und AC (KlikAanKlikUit, Intertechno und Kompatible): schalten und mithören
 - Temperatur-/Feuchtesensoren mit Hideki-Protokoll (TFA, Technoline, Cresta, Bresser)
 - Neue Steckdosen und Sensoren erscheinen über MQTT-Discovery von selbst in Home Assistant, ähnlich wie beim RFXtrx
-- UV-Sensoren UVN800 und UVR128 von Oregon Scientific (experimentell)
+- UV-Sensoren UVN800 und UVR128 von Oregon Scientific
 
 ## Hardware
 
@@ -209,7 +209,7 @@ Die angelegten Geräte merkt sich der MQTT-Broker, der ESP speichert dafür nich
 
 Temperatur-/Feuchtesensoren mit Hideki-Protokoll werden mitgelesen. Der Kanal ist der am Sensor eingestellte, ein Batteriewechsel ändert die Zuordnung nicht. Die Werte gibt es nur über MQTT-Discovery; meldet sich ein Sensor 10 Minuten nicht, zeigt Home Assistant ihn als nicht verfügbar.
 
-### Oregon Scientific (experimentell)
+### UV-Sensoren (Oregon Scientific)
 
 Die UV-Sensoren UVN800 und UVR128 (Oregon Scientific v2.1/v3.0) erscheinen über MQTT-Discovery als „Oregon UV … Kanal N“ mit UV-Index und Batteriewarnung. Jedes erkannte Oregon-Paket steht mit Kennung und Rohdaten im Log. Rückmeldungen und Logs sind willkommen.
 

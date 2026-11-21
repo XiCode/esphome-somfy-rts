@@ -199,7 +199,7 @@ void Rf433Component::on_hideki_(const HidekiPacket &packet) {
 
   uint8_t type = packet.data[3] & 0x1F;
   if (type != 0x1E || packet.length < 10) {
-    ESP_LOGI(TAG, "Empfangen: hideki %s- Sensortyp 0x%02X wird noch nicht ausgewertet", hex.c_str(), type);
+    ESP_LOGI(TAG, "Empfangen: hideki %s- Sensortyp 0x%02X (Rohdaten)", hex.c_str(), type);
     return;
   }
 
