@@ -1,0 +1,5 @@
+secrets.yaml
+.esphome/
+__pycache__/
+# your own device config, if you keep it in a checkout
+/example/somfy-rts.local.yaml

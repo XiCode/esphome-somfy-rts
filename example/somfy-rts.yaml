@@ -1,0 +1,251 @@
+# Example configuration: copy next to partitions.csv into your ESPHome config folder
+# (Home Assistant: /config/esphome/) and adapt it to your blinds.
+# Keep your real file private: it contains your remote addresses.
+
+substitutions:
+  name: somfy-rts
+  friendly_name: Somfy RTS
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  comment: ESP32 + CC1101, Somfy RTS 433.42 MHz
+
+esp32:
+  board: esp32dev
+  # Keeps the NVS (rolling codes) at 0x9000, same layout as the Arduino default
+  partitions: partitions.csv
+  framework:
+    type: arduino
+
+external_components:
+  - source: github://XiCode/esphome-somfy-rts@v1.0.0
+    components: [somfy_rts, rf433]
+
+logger:
+
+api:
+  encryption:
+    key: !secret somfy_api_key
+
+ota:
+  - platform: esphome
+    password: !secret somfy_ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Opens its own hotspot after 1 min without Wi-Fi
+  ap:
+    ssid: "Somfy-RTS Fallback"
+    password: !secret somfy_ap_password
+
+captive_portal:
+
+# --------------------------------------------------
+# CC1101
+# --------------------------------------------------
+somfy_rts:
+  id: somfy
+  sck_pin: 18
+  miso_pin: 19
+  mosi_pin: 23
+  cs_pin: 5
+  gdo0_pin: 4   # transmit
+  gdo2_pin: 2   # receive
+  frequency: 433.42MHz
+  # Wide receiver so Somfy (433.42 MHz) and RF sockets/remotes (433.92 MHz) are heard
+  # at the same time. Costs some range. Only using Somfy, or Somfy remotes are missed?
+  # Remove both lines.
+  rx_frequency: 433.67MHz
+  rx_bandwidth: 812kHz
+  # Every received button press, also from unknown remotes
+  on_receive:
+    - text_sensor.template.publish:
+        id: last_remote
+        state: !lambda 'return remote + " " + command;'
+    - homeassistant.event:
+        event: esphome.somfy_remote
+        data:
+          remote: !lambda 'return remote;'
+          command: !lambda 'return command;'
+
+# --------------------------------------------------
+# Blinds. Pick a unique 24-bit address per blind.
+# Never change address or storage_key after pairing, or you have to pair again.
+# min_rolling_code: safety net in case the NVS is lost (enter the last code from the log).
+# remotes: original remotes whose button presses update the position model.
+# --------------------------------------------------
+cover:
+  - platform: somfy_rts
+    id: blind1
+    name: Blind 1
+    address: 0x1A2B01
+    storage_key: remote_1
+    min_rolling_code: 1
+    open_duration: 20s
+    close_duration: 18s
+    my_position: 50%
+    remotes: [0x123ABC]
+
+  - platform: somfy_rts
+    id: blind2
+    name: Blind 2
+    address: 0x1A2B02
+    storage_key: remote_2
+    min_rolling_code: 1
+    open_duration: 20s
+    close_duration: 18s
+    remotes: [0x123ABD]
+
+  - platform: template
+    name: All blinds
+    device_class: shutter
+    assumed_state: true
+    open_action:
+      - cover.open: blind1
+      - cover.open: blind2
+    close_action:
+      - cover.close: blind1
+      - cover.close: blind2
+    stop_action:
+      - cover.stop: blind1
+      - cover.stop: blind2
+
+# --------------------------------------------------
+# Optional: MQTT, only for auto-discovery of RF sockets and sensors (rf433 mqtt_discovery).
+# Blinds and all other entities keep using the ESPHome API.
+# --------------------------------------------------
+mqtt:
+  broker: !secret mqtt_broker
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  discovery: false      # don't duplicate the ESPHome entities via MQTT
+  log_topic: null
+  reboot_timeout: 0s    # a broker outage must not reboot the blinds controller
+
+# --------------------------------------------------
+# Optional: RF sockets and remotes on 433.92 MHz (PT2262 and AC/Intertechno)
+# Press a button on the remote and read the code from "Last 433 code".
+# --------------------------------------------------
+rf433:
+  id: rf
+  mqtt_discovery: true
+  # dump_unknown: true   # logs unrecognised pulse trains
+  on_receive:
+    - text_sensor.template.publish:
+        id: last_rf433
+        state: !lambda 'return protocol + " " + code + (state ? " on" : " off");'
+    - homeassistant.event:
+        event: esphome.rf433
+        data:
+          protocol: !lambda 'return protocol;'
+          code: !lambda 'return code;'
+          state: !lambda 'return state ? "on" : "off";'
+
+switch:
+  - platform: template
+    name: Auto-add new 433 devices
+    icon: mdi:plus-network
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    turn_on_action:
+      - lambda: id(rf).set_auto_add(true);
+    turn_off_action:
+      - lambda: id(rf).set_auto_add(false);
+  # Cheap fixed-code socket: one code for on, one for off
+  - platform: rf433
+    name: Socket 1
+    protocol: pt2262
+    on_code: 0x451551
+    off_code: 0x451554
+  # Self-learning socket: address and unit of the remote it is paired with
+  - platform: rf433
+    name: Socket 2
+    protocol: ac
+    address: 0x1A2B3C4
+    unit: 3
+
+binary_sensor:
+  # Listen only: a remote button, briefly turns "on"
+  - platform: rf433
+    name: RF button
+    protocol: pt2262
+    on_code: 0x4515C0
+  - platform: status
+    name: Status
+
+# --------------------------------------------------
+# MY position and pairing
+# --------------------------------------------------
+button:
+  - platform: template
+    name: Blind 1 – go to MY
+    icon: mdi:star
+    on_press:
+      - lambda: id(blind1).goto_my();
+  - platform: template
+    name: Blind 1 – save MY
+    icon: mdi:star-plus
+    entity_category: config
+    on_press:
+      - lambda: id(blind1).save_my();
+  - platform: template
+    name: Blind 1 – pair with motor
+    icon: mdi:remote
+    entity_category: config
+    on_press:
+      - lambda: id(blind1).prog();
+
+  - platform: template
+    name: Blind 2 – go to MY
+    icon: mdi:star
+    on_press:
+      - lambda: id(blind2).goto_my();
+  - platform: template
+    name: Blind 2 – save MY
+    icon: mdi:star-plus
+    entity_category: config
+    on_press:
+      - lambda: id(blind2).save_my();
+  - platform: template
+    name: Blind 2 – pair with motor
+    icon: mdi:remote
+    entity_category: config
+    on_press:
+      - lambda: id(blind2).prog();
+
+  - platform: template
+    name: Remove auto-added 433 devices
+    icon: mdi:delete-sweep
+    entity_category: config
+    on_press:
+      - lambda: id(rf).remove_discovered();
+
+  - platform: restart
+    name: Restart
+    entity_category: config
+
+# --------------------------------------------------
+# Diagnostics
+# --------------------------------------------------
+text_sensor:
+  - platform: template
+    id: last_remote
+    name: Last remote
+    icon: mdi:remote-tv
+  - platform: template
+    id: last_rf433
+    name: Last 433 code
+    icon: mdi:radio-tower
+  - platform: wifi_info
+    ip_address:
+      name: IP address
+
+sensor:
+  - platform: wifi_signal
+    name: Wi-Fi signal
+    update_interval: 60s
+  - platform: uptime
+    name: Uptime
