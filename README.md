@@ -22,13 +22,13 @@ The same CC1101 can also switch and receive cheap 433.92 MHz RF sockets and read
 - PT2262 / EV1527 (fixed-code sockets) and AC (KlikAanKlikUit, Intertechno and compatibles): switch and listen
 - Hideki temperature/humidity sensors (TFA, Technoline, Cresta, Bresser)
 - New sockets and sensors appear in Home Assistant by themselves via MQTT discovery, similar to an RFXtrx
-- Oregon Scientific v2.1/v3 decoder (UV sensors only): **experimental, never tested with a real sensor**
+- Oregon Scientific UV sensors UVN800 and UVR128 (experimental)
 
 ## Hardware
 
 - ESP32 board, e.g. ESP32 DevKit
 - CC1101 module for **433 MHz**
-- Somfy **RTS** motors. io-homecontrol (868 MHz, encrypted) is not supported.
+- Somfy **RTS** motors (433.42 MHz)
 
 | CC1101 | ESP32  | Function |
 |--------|--------|----------|
@@ -174,8 +174,6 @@ Every received code also fires `esphome.rf433` with `protocol`, `code` and `stat
 
 `dump_unknown: true` in `rf433:` logs longer unrecognised pulse trains, handy to check whether a device transmits on 433 MHz at all.
 
-Dimming and HomeEasy EU are not supported.
-
 ### Auto-discovery via MQTT
 
 ESPHome cannot create entities at runtime. With an MQTT broker (e.g. the Mosquitto add-on), new sockets and sensors still show up on their own:
@@ -209,11 +207,11 @@ The broker remembers the created devices, the ESP stores nothing for them. Delet
 
 ### Weather sensors (Hideki)
 
-Hideki temperature/humidity sensors are decoded. The channel is the one set on the sensor, so a battery change keeps the mapping. Values are only available via MQTT discovery; a sensor that is silent for 10 minutes shows as unavailable. Other Hideki types (wind, rain, UV) are logged with raw data but not decoded yet.
+Hideki temperature/humidity sensors are decoded. The channel is the one set on the sensor, so a battery change keeps the mapping. Values are only available via MQTT discovery; a sensor that is silent for 10 minutes shows as unavailable.
 
 ### Oregon Scientific (experimental)
 
-A decoder for Oregon Scientific v2.1 and v3.0 logs every recognised packet with ID and raw data. Only the UV sensors UVN800 and UVR128 are decoded. **This part has never been tested with a real sensor.** Reports and logs are welcome.
+The UV sensors UVN800 and UVR128 (Oregon Scientific v2.1/v3.0) appear via MQTT discovery as "Oregon UV … channel N" with UV index and low battery. Every recognised Oregon packet is logged with ID and raw data. Reports and logs are welcome.
 
 ## Operation
 

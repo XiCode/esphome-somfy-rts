@@ -22,13 +22,13 @@ Derselbe CC1101 kann außerdem billige Funksteckdosen auf 433,92 MHz schalten un
 - PT2262 / EV1527 (Steckdosen mit festem Code) und AC (KlikAanKlikUit, Intertechno und Kompatible): schalten und mithören
 - Temperatur-/Feuchtesensoren mit Hideki-Protokoll (TFA, Technoline, Cresta, Bresser)
 - Neue Steckdosen und Sensoren erscheinen über MQTT-Discovery von selbst in Home Assistant, ähnlich wie beim RFXtrx
-- Dekoder für Oregon Scientific v2.1/v3 (nur UV-Sensoren): **experimentell, nie an einem echten Sensor geprüft**
+- UV-Sensoren UVN800 und UVR128 von Oregon Scientific (experimentell)
 
 ## Hardware
 
 - ESP32-Board, z. B. ESP32 DevKit
 - CC1101-Modul für **433 MHz**
-- Somfy-**RTS**-Motoren. io-homecontrol (868 MHz, verschlüsselt) wird nicht unterstützt.
+- Somfy-**RTS**-Motoren (433,42 MHz)
 
 | CC1101 | ESP32  | Funktion |
 |--------|--------|----------|
@@ -174,8 +174,6 @@ Jeder empfangene Code löst außerdem das Event `esphome.rf433` mit `protocol`, 
 
 `dump_unknown: true` im Block `rf433:` schreibt längere, nicht erkannte Pulsfolgen ins Log. Damit lässt sich prüfen, ob ein Gerät überhaupt auf 433 MHz sendet.
 
-Dimmen und HomeEasy EU werden nicht unterstützt.
-
 ### Geräte automatisch anlegen (MQTT-Discovery)
 
 ESPHome kann zur Laufzeit keine Entitäten anlegen. Mit einem MQTT-Broker (z. B. dem Mosquitto-Add-on) erscheinen neue Steckdosen und Sensoren trotzdem von selbst:
@@ -209,11 +207,11 @@ Die angelegten Geräte merkt sich der MQTT-Broker, der ESP speichert dafür nich
 
 ### Wettersensoren (Hideki)
 
-Temperatur-/Feuchtesensoren mit Hideki-Protokoll werden mitgelesen. Der Kanal ist der am Sensor eingestellte, ein Batteriewechsel ändert die Zuordnung nicht. Die Werte gibt es nur über MQTT-Discovery; meldet sich ein Sensor 10 Minuten nicht, zeigt Home Assistant ihn als nicht verfügbar. Andere Hideki-Sensortypen (Wind, Regen, UV) erscheinen mit ihren Rohdaten im Log, werden aber noch nicht ausgewertet.
+Temperatur-/Feuchtesensoren mit Hideki-Protokoll werden mitgelesen. Der Kanal ist der am Sensor eingestellte, ein Batteriewechsel ändert die Zuordnung nicht. Die Werte gibt es nur über MQTT-Discovery; meldet sich ein Sensor 10 Minuten nicht, zeigt Home Assistant ihn als nicht verfügbar.
 
 ### Oregon Scientific (experimentell)
 
-Ein Dekoder für Oregon Scientific Version 2.1 und 3.0 schreibt jedes erkannte Paket mit Kennung und Rohdaten ins Log. Ausgewertet werden nur die UV-Sensoren UVN800 und UVR128. **Dieser Teil ist noch nie an einem echten Sensor geprüft worden.** Rückmeldungen und Logs sind willkommen.
+Die UV-Sensoren UVN800 und UVR128 (Oregon Scientific v2.1/v3.0) erscheinen über MQTT-Discovery als „Oregon UV … Kanal N“ mit UV-Index und Batteriewarnung. Jedes erkannte Oregon-Paket steht mit Kennung und Rohdaten im Log. Rückmeldungen und Logs sind willkommen.
 
 ## Bedienung
 
